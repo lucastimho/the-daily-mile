@@ -1,4 +1,4 @@
-package com.thedailymile
+package com.anonymous.thedailymile
 
 import android.os.Build
 import android.os.Bundle

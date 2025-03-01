@@ -2,6 +2,12 @@
   "expo": {
     "name": "the-daily-mile",
     "slug": "the-daily-mile",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "android": {
+      "package": "com.anonymous.thedailymile"
+    },
+    "ios": {
+      "bundleIdentifier": "com.anonymous.thedailymile"
+    }
   }
 }

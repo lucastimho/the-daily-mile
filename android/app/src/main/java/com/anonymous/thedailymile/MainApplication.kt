@@ -1,4 +1,4 @@
-package com.thedailymile
+package com.anonymous.thedailymile
 
 import android.app.Application
 import android.content.res.Configuration
