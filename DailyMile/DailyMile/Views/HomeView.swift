@@ -2,6 +2,14 @@ import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject var appState: AppState
+    @State private var percentileMetric: PercentileMetric = .pace
+    
+    enum PercentileMetric: String, CaseIterable, Identifiable {
+        case pace = "Pace"
+        case distance = "Distance"
+        
+        var id: String { self.rawValue }
+    }
     
     var body: some View {
         NavigationView {
@@ -27,6 +35,28 @@ struct HomeView: View {
                             .foregroundColor(ColorTheme.textPrimary)
                         
                         WeeklyProgressView()
+                    }
+                    .padding(.horizontal)
+                    
+                    // Runner Percentile
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Text("Runner Percentile")
+                                .font(.headline)
+                                .foregroundColor(ColorTheme.textPrimary)
+                            
+                            Spacer()
+                            
+                            Picker("Metric", selection: $percentileMetric) {
+                                ForEach(PercentileMetric.allCases) { metric in
+                                    Text(metric.rawValue).tag(metric)
+                                }
+                            }
+                            .pickerStyle(SegmentedPickerStyle())
+                            .frame(width: 180)
+                        }
+                        
+                        RunnerPercentileView(metric: percentileMetric)
                     }
                     .padding(.horizontal)
                     
@@ -198,6 +228,140 @@ struct ProgressBar: View {
                     .cornerRadius(5)
             }
         }
+    }
+}
+
+struct RunnerPercentileView: View {
+    let metric: HomeView.PercentileMetric
+    @State private var animationProgress: CGFloat = 0
+    
+    // Static percentile data - would be calculated from actual data in a real app
+    private var userPercentile: Int {
+        switch metric {
+        case .pace:
+            return 75 // 75th percentile for pace (better than 75% of runners)
+        case .distance:
+            return 62 // 62nd percentile for distance
+        }
+    }
+    
+    private var labelText: String {
+        switch metric {
+        case .pace:
+            return "Your pace is faster than \(userPercentile)% of runners"
+        case .distance:
+            return "Your distance is greater than \(userPercentile)% of runners"
+        }
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(labelText)
+                .font(.subheadline)
+                .foregroundColor(ColorTheme.textPrimary)
+            
+            ZStack(alignment: .leading) {
+                // Background track
+                RoundedRectangle(cornerRadius: 10)
+                    .frame(height: 20)
+                    .foregroundColor(Color(.systemGray5))
+                
+                // Filled portion
+                RoundedRectangle(cornerRadius: 10)
+                    .frame(width: animationProgress * CGFloat(userPercentile) / 100, height: 20)
+                    .foregroundColor(percentileColor)
+                
+                // Percentile markers
+                HStack {
+                    ForEach([25, 50, 75, 100], id: \.self) { marker in
+                        Spacer()
+                        if marker != 100 {
+                            Rectangle()
+                                .frame(width: 1, height: 10)
+                                .foregroundColor(Color(.systemGray3))
+                        }
+                    }
+                }
+                .padding(.horizontal, 4)
+                
+                // Interactive slider knob
+                Circle()
+                    .frame(width: 30, height: 30)
+                    .foregroundColor(.white)
+                    .shadow(radius: 2)
+                    .overlay(
+                        Text("\(userPercentile)")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(Color(.darkGray))
+                    )
+                    .offset(x: (animationProgress * CGFloat(userPercentile) / 100) - 15)
+            }
+            .frame(height: 30)
+            .overlay(
+                GeometryReader { geometry in
+                    Color.clear.preference(
+                        key: WidthPreferenceKey.self,
+                        value: geometry.size.width
+                    )
+                }
+            )
+            .onPreferenceChange(WidthPreferenceKey.self) { width in
+                withAnimation(.easeOut(duration: 1.0)) {
+                    self.animationProgress = width > 0 ? 1.0 : 0.0
+                }
+            }
+            
+            HStack {
+                Text("Beginner")
+                    .font(.caption)
+                    .foregroundColor(ColorTheme.textSecondary)
+                
+                Spacer()
+                
+                Text("Average")
+                    .font(.caption)
+                    .foregroundColor(ColorTheme.textSecondary)
+                
+                Spacer()
+                
+                Text("Elite")
+                    .font(.caption)
+                    .foregroundColor(ColorTheme.textSecondary)
+            }
+        }
+        .padding()
+        .background(ColorTheme.cardBackground)
+        .cornerRadius(12)
+        .onAppear {
+            withAnimation(.easeOut(duration: 1.0).delay(0.3)) {
+                animationProgress = 1.0
+            }
+        }
+        .onChange(of: metric) { _ in
+            // Reset and reanimate when changing metrics
+            animationProgress = 0
+            withAnimation(.easeOut(duration: 1.0)) {
+                animationProgress = 1.0
+            }
+        }
+    }
+    
+    private var percentileColor: Color {
+        if userPercentile < 33 {
+            return ColorTheme.warning
+        } else if userPercentile < 66 {
+            return ColorTheme.info
+        } else {
+            return ColorTheme.success
+        }
+    }
+}
+
+struct WidthPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }
 
