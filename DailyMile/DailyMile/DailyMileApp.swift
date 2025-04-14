@@ -15,6 +15,11 @@ struct DailyMileApp: App {
         WindowGroup {
             MainTabView()
                 .environmentObject(appState)
+                .preferredColorScheme(appState.colorScheme)
+                .onAppear {
+                    // Initialize color scheme based on saved preference
+                    appState.updateColorScheme()
+                }
         }
     }
 }

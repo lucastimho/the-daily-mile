@@ -54,7 +54,7 @@ struct RunView: View {
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(Color.red)
+                                .background(ColorTheme.error)
                                 .cornerRadius(12)
                         }
                         .padding(.horizontal, 30)
@@ -69,7 +69,7 @@ struct RunView: View {
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(Color.green)
+                                .background(ColorTheme.success)
                                 .cornerRadius(12)
                         }
                         .padding(.horizontal, 30)
@@ -77,7 +77,7 @@ struct RunView: View {
                     }
                 }
                 .frame(maxHeight: .infinity)
-                .background(Color(.systemBackground))
+                .background(ColorTheme.background)
             }
             
             // Demo mode indicator
@@ -88,7 +88,7 @@ struct RunView: View {
                     Text("DEMO MODE")
                         .font(.caption)
                         .padding(5)
-                        .background(Color.yellow.opacity(0.7))
+                        .background(ColorTheme.warning.opacity(0.7))
                         .cornerRadius(5)
                         .padding(5)
                 }
@@ -140,15 +140,16 @@ struct RunStatView: View {
             Text(title)
                 .font(.caption)
                 .fontWeight(.medium)
-                .foregroundColor(.secondary)
+                .foregroundColor(ColorTheme.textSecondary)
             
             Text(value)
                 .font(.system(size: 28, weight: .bold))
+                .foregroundColor(ColorTheme.textPrimary)
             
             Text(unit)
                 .font(.caption)
                 .fontWeight(.medium)
-                .foregroundColor(.secondary)
+                .foregroundColor(ColorTheme.textSecondary)
         }
     }
 }
@@ -205,7 +206,7 @@ struct RunSummaryView: View {
                         presentationMode.wrappedValue.dismiss()
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .foregroundColor(.green)
+                    .foregroundColor(ColorTheme.success)
                 }
             }
             .navigationTitle("Workout Complete!")

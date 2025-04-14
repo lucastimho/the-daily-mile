@@ -12,10 +12,11 @@ struct HomeView: View {
                         Text("Welcome, \(appState.currentUser.name)")
                             .font(.title)
                             .fontWeight(.bold)
+                            .foregroundColor(ColorTheme.textPrimary)
                         
                         Text("Let's achieve your running goals!")
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(ColorTheme.textSecondary)
                     }
                     .padding(.horizontal)
                     
@@ -23,6 +24,7 @@ struct HomeView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Weekly Progress")
                             .font(.headline)
+                            .foregroundColor(ColorTheme.textPrimary)
                         
                         WeeklyProgressView()
                     }
@@ -34,21 +36,21 @@ struct HomeView: View {
                             title: "This Week",
                             value: String(format: "%.1f mi", appState.totalDistanceThisWeek()),
                             icon: "figure.walk",
-                            color: .blue
+                            color: ColorTheme.info
                         )
                         
                         StatCard(
                             title: "Last Run",
                             value: appState.workouts.first?.formattedPace ?? "-",
                             icon: "timer",
-                            color: .orange
+                            color: ColorTheme.secondary
                         )
                         
                         StatCard(
                             title: "Goal",
                             value: "\(appState.currentUser.weeklyGoal) mi",
                             icon: "flag.fill",
-                            color: .green
+                            color: ColorTheme.primary
                         )
                     }
                     .padding(.horizontal)
@@ -57,6 +59,7 @@ struct HomeView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Recent Workouts")
                             .font(.headline)
+                            .foregroundColor(ColorTheme.textPrimary)
                         
                         ForEach(appState.workouts.prefix(3)) { workout in
                             WorkoutCard(workout: workout)
@@ -68,6 +71,7 @@ struct HomeView: View {
             }
             .navigationTitle("Daily Mile")
             .navigationBarTitleDisplayMode(.inline)
+            .background(ColorTheme.background)
         }
     }
 }
@@ -80,19 +84,20 @@ struct WeeklyProgressView: View {
             HStack {
                 Text("\(String(format: "%.1f", appState.totalDistanceThisWeek())) of \(appState.currentUser.weeklyGoal) miles")
                     .font(.subheadline)
+                    .foregroundColor(ColorTheme.textPrimary)
                 
                 Spacer()
                 
                 Text("\(Int(appState.weeklyGoalProgress() * 100))%")
                     .font(.headline)
-                    .foregroundColor(.green)
+                    .foregroundColor(ColorTheme.primary)
             }
             
             ProgressBar(value: appState.weeklyGoalProgress())
                 .frame(height: 10)
         }
         .padding()
-        .background(Color(.systemGray6))
+        .background(ColorTheme.cardBackground)
         .cornerRadius(12)
     }
 }
@@ -111,16 +116,17 @@ struct StatCard: View {
                 
                 Text(title)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(ColorTheme.textSecondary)
             }
             
             Text(value)
                 .font(.title3)
                 .fontWeight(.bold)
+                .foregroundColor(ColorTheme.textPrimary)
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.systemGray6))
+        .background(ColorTheme.cardBackground)
         .cornerRadius(12)
     }
 }
@@ -132,15 +138,17 @@ struct WorkoutCard: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: "figure.run")
-                    .foregroundColor(.green)
+                    .foregroundColor(ColorTheme.primary)
                 
                 Text(formattedDate())
                     .font(.headline)
+                    .foregroundColor(ColorTheme.textPrimary)
                 
                 Spacer()
                 
                 Text(String(format: "%.1f mi", workout.distance))
                     .fontWeight(.semibold)
+                    .foregroundColor(ColorTheme.textPrimary)
             }
             
             HStack {
@@ -152,17 +160,17 @@ struct WorkoutCard: View {
                 Label(workout.formattedPace, systemImage: "speedometer")
                     .font(.subheadline)
             }
-            .foregroundColor(.secondary)
+            .foregroundColor(ColorTheme.textSecondary)
             
             if let notes = workout.notes, !notes.isEmpty {
                 Text(notes)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(ColorTheme.textSecondary)
                     .lineLimit(1)
             }
         }
         .padding()
-        .background(Color(.systemGray6))
+        .background(ColorTheme.cardBackground)
         .cornerRadius(12)
     }
     
@@ -185,7 +193,7 @@ struct ProgressBar: View {
                     .cornerRadius(5)
                 
                 Rectangle()
-                    .foregroundColor(.green)
+                    .foregroundColor(ColorTheme.primary)
                     .frame(width: min(CGFloat(value) * geometry.size.width, geometry.size.width))
                     .cornerRadius(5)
             }

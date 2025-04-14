@@ -48,27 +48,27 @@ struct HistoryView: View {
                             title: "Total Runs",
                             value: "\(filteredWorkouts.count)",
                             icon: "figure.run",
-                            color: .blue
+                            color: ColorTheme.info
                         )
                         
                         HistoryStatCard(
                             title: "Distance",
                             value: String(format: "%.1f mi", totalDistance()),
                             icon: "map",
-                            color: .green
+                            color: ColorTheme.success
                         )
                         
                         HistoryStatCard(
                             title: "Avg Pace",
                             value: averagePace(),
                             icon: "speedometer",
-                            color: .orange
+                            color: ColorTheme.secondary
                         )
                     }
                     .padding(.horizontal)
                 }
                 .padding(.vertical)
-                .background(Color(.systemBackground))
+                .background(ColorTheme.background)
                 
                 Divider()
                 
@@ -77,17 +77,18 @@ struct HistoryView: View {
                     VStack(spacing: 16) {
                         Image(systemName: "figure.run")
                             .font(.system(size: 50))
-                            .foregroundColor(.gray)
+                            .foregroundColor(ColorTheme.textSecondary)
                         
                         Text("No workouts yet")
                             .font(.headline)
+                            .foregroundColor(ColorTheme.textPrimary)
                         
                         Text("Your completed runs will appear here")
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(ColorTheme.textSecondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(.systemGroupedBackground))
+                    .background(ColorTheme.background)
                 } else {
                     List {
                         ForEach(filteredWorkouts) { workout in
@@ -138,14 +139,15 @@ struct HistoryStatCard: View {
             Text(value)
                 .font(.headline)
                 .fontWeight(.bold)
+                .foregroundColor(ColorTheme.textPrimary)
             
             Text(title)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(ColorTheme.textSecondary)
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(Color(.systemGray6))
+        .background(ColorTheme.cardBackground)
         .cornerRadius(12)
     }
 }
@@ -158,11 +160,12 @@ struct WorkoutListItem: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(formattedDate())
                     .font(.headline)
+                    .foregroundColor(ColorTheme.textPrimary)
                 
                 if let notes = workout.notes, !notes.isEmpty {
                     Text(notes)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(ColorTheme.textSecondary)
                         .lineLimit(1)
                 }
             }
@@ -172,10 +175,11 @@ struct WorkoutListItem: View {
             VStack(alignment: .trailing, spacing: 4) {
                 Text(String(format: "%.1f mi", workout.distance))
                     .font(.headline)
+                    .foregroundColor(ColorTheme.textPrimary)
                 
                 Text(workout.formattedPace)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(ColorTheme.textSecondary)
             }
         }
         .padding(.vertical, 8)
@@ -198,9 +202,10 @@ struct WorkoutDetailView: View {
                 // Date header
                 Text(formattedDate())
                     .font(.headline)
+                    .foregroundColor(ColorTheme.textPrimary)
                     .padding()
                     .frame(maxWidth: .infinity)
-                    .background(Color(.systemGray6))
+                    .background(ColorTheme.cardBackground)
                     .cornerRadius(12)
                 
                 // Quick stats
@@ -214,22 +219,24 @@ struct WorkoutDetailView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Pace")
                         .font(.headline)
+                        .foregroundColor(ColorTheme.textPrimary)
                     
                     HStack {
                         Image(systemName: "speedometer")
-                            .foregroundColor(.orange)
+                            .foregroundColor(ColorTheme.secondary)
                         
                         Text(workout.formattedPace)
                             .font(.title2)
                             .fontWeight(.bold)
+                            .foregroundColor(ColorTheme.textPrimary)
                         
                         Text("per mile")
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(ColorTheme.textSecondary)
                     }
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color(.systemGray6))
+                    .background(ColorTheme.cardBackground)
                     .cornerRadius(12)
                 }
                 
@@ -238,11 +245,13 @@ struct WorkoutDetailView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Notes")
                             .font(.headline)
+                            .foregroundColor(ColorTheme.textPrimary)
                         
                         Text(notes)
+                            .foregroundColor(ColorTheme.textPrimary)
                             .padding()
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color(.systemGray6))
+                            .background(ColorTheme.cardBackground)
                             .cornerRadius(12)
                     }
                 }
@@ -251,12 +260,13 @@ struct WorkoutDetailView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Route")
                         .font(.headline)
+                        .foregroundColor(ColorTheme.textPrimary)
                     
                     Image(systemName: "map")
                         .font(.system(size: 50))
-                        .foregroundColor(.gray)
+                        .foregroundColor(ColorTheme.textSecondary)
                         .frame(maxWidth: .infinity, minHeight: 200)
-                        .background(Color(.systemGray6))
+                        .background(ColorTheme.cardBackground)
                         .cornerRadius(12)
                 }
             }
@@ -283,23 +293,24 @@ struct DetailStatCard: View {
         VStack(alignment: .center, spacing: 4) {
             Text(title)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(ColorTheme.textSecondary)
             
             HStack(alignment: .lastTextBaseline, spacing: 2) {
                 Text(value)
                     .font(.title3)
                     .fontWeight(.bold)
+                    .foregroundColor(ColorTheme.textPrimary)
                 
                 if !unit.isEmpty {
                     Text(unit)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(ColorTheme.textSecondary)
                 }
             }
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(Color(.systemGray6))
+        .background(ColorTheme.cardBackground)
         .cornerRadius(12)
     }
 }

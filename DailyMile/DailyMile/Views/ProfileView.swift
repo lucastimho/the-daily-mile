@@ -26,21 +26,21 @@ struct ProfileView: View {
                             TextField("Age", text: $age)
                                 .keyboardType(.numberPad)
                             Text("years")
-                                .foregroundColor(.secondary)
+                                .foregroundColor(ColorTheme.textSecondary)
                         }
                         
                         HStack {
                             TextField("Weight", text: $weight)
                                 .keyboardType(.decimalPad)
                             Text("kg")
-                                .foregroundColor(.secondary)
+                                .foregroundColor(ColorTheme.textSecondary)
                         }
                         
                         HStack {
                             TextField("Height", text: $height)
                                 .keyboardType(.decimalPad)
                             Text("cm")
-                                .foregroundColor(.secondary)
+                                .foregroundColor(ColorTheme.textSecondary)
                         }
                         
                         Picker("Experience Level", selection: $experience) {
@@ -53,7 +53,7 @@ struct ProfileView: View {
                             TextField("Weekly Goal", text: $weeklyGoal)
                                 .keyboardType(.numberPad)
                             Text("miles")
-                                .foregroundColor(.secondary)
+                                .foregroundColor(ColorTheme.textSecondary)
                         }
                     } else {
                         ProfileInfoRow(label: "Name", value: appState.currentUser.name)
@@ -62,6 +62,18 @@ struct ProfileView: View {
                         ProfileInfoRow(label: "Height", value: "\(appState.currentUser.height) cm")
                         ProfileInfoRow(label: "Experience", value: appState.currentUser.experience.rawValue)
                         ProfileInfoRow(label: "Weekly Goal", value: "\(appState.currentUser.weeklyGoal) miles")
+                    }
+                }
+                
+                // Appearance Settings
+                Section(header: Text("Appearance")) {
+                    Picker("Theme Mode", selection: $appState.themeMode) {
+                        ForEach(ThemeMode.allCases) { mode in
+                            Text(mode.rawValue).tag(mode)
+                        }
+                    }
+                    .onChange(of: appState.themeMode) { _ in
+                        appState.updateColorScheme()
                     }
                 }
                 
@@ -99,14 +111,14 @@ struct ProfileView: View {
                             saveChanges()
                             isEditMode = false
                         }
-                        .foregroundColor(.green)
+                        .foregroundColor(ColorTheme.success)
                         
                         Button("Cancel") {
                             // Reset local state
                             resetLocalState()
                             isEditMode = false
                         }
-                        .foregroundColor(.red)
+                        .foregroundColor(ColorTheme.error)
                     } else {
                         Button("Edit Profile") {
                             // Set local state
@@ -161,7 +173,7 @@ struct ProfileInfoRow: View {
             Text(label)
             Spacer()
             Text(value)
-                .foregroundColor(.secondary)
+                .foregroundColor(ColorTheme.textSecondary)
         }
     }
 }
@@ -210,7 +222,7 @@ struct AccessibilitySettingsView: View {
                     voiceGuidance = false
                     reducedMotion = false
                 }
-                .foregroundColor(.red)
+                .foregroundColor(ColorTheme.error)
             }
         }
         .navigationTitle("Accessibility")

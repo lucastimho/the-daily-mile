@@ -1,6 +1,15 @@
 import Foundation
 import SwiftUI
 
+// Theme mode enum
+enum ThemeMode: String, CaseIterable, Identifiable {
+    case light = "Light"
+    case dark = "Dark"
+    case system = "System"
+    
+    var id: String { self.rawValue }
+}
+
 class AppState: ObservableObject {
     @Published var currentUser: UserProfile
     @Published var workouts: [Workout]
@@ -8,6 +17,10 @@ class AppState: ObservableObject {
     @Published var currentRunTime: TimeInterval = 0
     @Published var currentRunDistance: Double = 0
     @Published var isDemoMode: Bool = true
+    @Published var themeMode: ThemeMode = .system
+    
+    // Theme color scheme computed property
+    @Published var colorScheme: ColorScheme? = nil
     
     init(demoMode: Bool = true) {
         self.isDemoMode = demoMode
@@ -19,6 +32,18 @@ class AppState: ObservableObject {
             // In a real app, we would load from persistent storage
             self.currentUser = UserProfile(name: "", age: 0, weight: 0, height: 0, experience: .beginner, weeklyGoal: 0)
             self.workouts = []
+        }
+    }
+    
+    // Update the color scheme based on theme mode
+    func updateColorScheme() {
+        switch themeMode {
+        case .light:
+            colorScheme = .light
+        case .dark:
+            colorScheme = .dark
+        case .system:
+            colorScheme = nil // Use system default
         }
     }
     
