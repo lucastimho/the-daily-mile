@@ -11,8 +11,16 @@ enum ThemeMode: String, CaseIterable, Identifiable {
 }
 
 class AppState: ObservableObject {
-    @Published var currentUser: UserProfile
+    // Authentication state
+    @Published var isLoggedIn: Bool = false
+    @Published var currentUser: User?
+    @Published var loginError: String?
+    
+    // User profile data
+    @Published var userProfile: UserProfile
     @Published var workouts: [Workout]
+    
+    // App state
     @Published var isRunning: Bool = false
     @Published var currentRunTime: TimeInterval = 0
     @Published var currentRunDistance: Double = 0
@@ -25,14 +33,33 @@ class AppState: ObservableObject {
     init(demoMode: Bool = true) {
         self.isDemoMode = demoMode
         if demoMode {
-            // Use demo data for preview
-            self.currentUser = UserProfile.demoProfiles[0]
+            // Use demo data for preview - but not logged in yet
+            self.userProfile = UserProfile.demoProfiles[0]
             self.workouts = Workout.demoWorkouts
         } else {
             // In a real app, we would load from persistent storage
-            self.currentUser = UserProfile(name: "", age: 0, weight: 0, height: 0, experience: .beginner, weeklyGoal: 0)
+            self.userProfile = UserProfile(name: "", age: 0, weight: 0, height: 0, experience: .beginner, weeklyGoal: 0)
             self.workouts = []
         }
+    }
+    
+    // Login method
+    func login(username: String, password: String) {
+        if let user = User.authenticate(username: username, password: password) {
+            currentUser = user
+            userProfile = user.profile
+            isLoggedIn = true
+            loginError = nil
+        } else {
+            loginError = "Invalid username or password"
+        }
+    }
+    
+    // Logout method
+    func logout() {
+        isLoggedIn = false
+        currentUser = nil
+        loginError = nil
     }
     
     // Update the color scheme based on theme mode
@@ -58,7 +85,7 @@ class AppState: ObservableObject {
     
     func weeklyGoalProgress() -> Double {
         let distanceThisWeek = totalDistanceThisWeek()
-        return min(distanceThisWeek / Double(currentUser.weeklyGoal), 1.0)
+        return min(distanceThisWeek / Double(userProfile.weeklyGoal), 1.0)
     }
     
     func addWorkout(_ workout: Workout) {

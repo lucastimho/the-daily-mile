@@ -2,7 +2,6 @@
 //  ContentView.swift
 //  DailyMile
 //
-//  Created by Lucas Ho on 4/13/25.
 //
 
 import SwiftUI

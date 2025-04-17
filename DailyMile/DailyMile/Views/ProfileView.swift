@@ -13,6 +13,7 @@ struct ProfileView: View {
     
     @State private var isEditMode = false
     @State private var showingAccessibilitySettings = false
+    @State private var showingLogoutConfirmation = false
     
     var body: some View {
         NavigationView {
@@ -56,12 +57,12 @@ struct ProfileView: View {
                                 .foregroundColor(ColorTheme.textSecondary)
                         }
                     } else {
-                        ProfileInfoRow(label: "Name", value: appState.currentUser.name)
-                        ProfileInfoRow(label: "Age", value: "\(appState.currentUser.age) years")
-                        ProfileInfoRow(label: "Weight", value: "\(appState.currentUser.weight) kg")
-                        ProfileInfoRow(label: "Height", value: "\(appState.currentUser.height) cm")
-                        ProfileInfoRow(label: "Experience", value: appState.currentUser.experience.rawValue)
-                        ProfileInfoRow(label: "Weekly Goal", value: "\(appState.currentUser.weeklyGoal) miles")
+                        ProfileInfoRow(label: "Name", value: appState.userProfile.name)
+                        ProfileInfoRow(label: "Age", value: "\(appState.userProfile.age) years")
+                        ProfileInfoRow(label: "Weight", value: "\(appState.userProfile.weight) kg")
+                        ProfileInfoRow(label: "Height", value: "\(appState.userProfile.height) cm")
+                        ProfileInfoRow(label: "Experience", value: appState.userProfile.experience.rawValue)
+                        ProfileInfoRow(label: "Weekly Goal", value: "\(appState.userProfile.weeklyGoal) miles")
                     }
                 }
                 
@@ -127,33 +128,57 @@ struct ProfileView: View {
                         }
                     }
                 }
+                
+                // Logout section
+                Section {
+                    Button(action: {
+                        showingLogoutConfirmation = true
+                    }) {
+                        HStack {
+                            Spacer()
+                            Label("Logout", systemImage: "rectangle.portrait.and.arrow.right")
+                                .foregroundColor(ColorTheme.error)
+                            Spacer()
+                        }
+                    }
+                }
             }
             .navigationTitle("Profile")
             .onAppear {
                 resetLocalState()
             }
+            .alert(isPresented: $showingLogoutConfirmation) {
+                Alert(
+                    title: Text("Logout"),
+                    message: Text("Are you sure you want to logout?"),
+                    primaryButton: .destructive(Text("Logout")) {
+                        appState.logout()
+                    },
+                    secondaryButton: .cancel()
+                )
+            }
         }
     }
     
     private func resetLocalState() {
-        name = appState.currentUser.name
-        age = "\(appState.currentUser.age)"
-        weight = "\(appState.currentUser.weight)"
-        height = "\(appState.currentUser.height)"
-        experience = appState.currentUser.experience
-        weeklyGoal = "\(appState.currentUser.weeklyGoal)"
+        name = appState.userProfile.name
+        age = "\(appState.userProfile.age)"
+        weight = "\(appState.userProfile.weight)"
+        height = "\(appState.userProfile.height)"
+        experience = appState.userProfile.experience
+        weeklyGoal = "\(appState.userProfile.weeklyGoal)"
     }
     
     private func saveChanges() {
         // Update app state with edited values
         // In a real app, we would validate inputs and handle errors
         
-        let ageValue = Int(age) ?? appState.currentUser.age
-        let weightValue = Double(weight) ?? appState.currentUser.weight
-        let heightValue = Double(height) ?? appState.currentUser.height
-        let goalValue = Int(weeklyGoal) ?? appState.currentUser.weeklyGoal
+        let ageValue = Int(age) ?? appState.userProfile.age
+        let weightValue = Double(weight) ?? appState.userProfile.weight
+        let heightValue = Double(height) ?? appState.userProfile.height
+        let goalValue = Int(weeklyGoal) ?? appState.userProfile.weeklyGoal
         
-        appState.currentUser = UserProfile(
+        let updatedProfile = UserProfile(
             name: name,
             age: ageValue,
             weight: weightValue,
@@ -161,6 +186,14 @@ struct ProfileView: View {
             experience: experience,
             weeklyGoal: goalValue
         )
+        
+        appState.userProfile = updatedProfile
+        
+        // If we have a current user, update their profile too
+        if var user = appState.currentUser {
+            user.profile = updatedProfile
+            appState.currentUser = user
+        }
     }
 }
 

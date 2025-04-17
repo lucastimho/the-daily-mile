@@ -17,7 +17,7 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     // Welcome header
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Welcome, \(appState.currentUser.name)")
+                        Text("Welcome, \(appState.userProfile.name)")
                             .font(.title)
                             .fontWeight(.bold)
                             .foregroundColor(ColorTheme.textPrimary)
@@ -78,7 +78,7 @@ struct HomeView: View {
                         
                         StatCard(
                             title: "Goal",
-                            value: "\(appState.currentUser.weeklyGoal) mi",
+                            value: "\(appState.userProfile.weeklyGoal) mi",
                             icon: "flag.fill",
                             color: ColorTheme.primary
                         )
@@ -112,7 +112,7 @@ struct WeeklyProgressView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("\(String(format: "%.1f", appState.totalDistanceThisWeek())) of \(appState.currentUser.weeklyGoal) miles")
+                Text("\(String(format: "%.1f", appState.totalDistanceThisWeek())) of \(appState.userProfile.weeklyGoal) miles")
                     .font(.subheadline)
                     .foregroundColor(ColorTheme.textPrimary)
                 
