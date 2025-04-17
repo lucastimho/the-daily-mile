@@ -12,6 +12,10 @@ struct RouteMapView: UIViewRepresentable {
         mapView.delegate = context.coordinator
         mapView.region = region
         mapView.showsUserLocation = true
+        
+        // Customize the user location appearance
+        mapView.tintColor = UIColor(red: 0.0, green: 0.5, blue: 1.0, alpha: 1.0) // Vibrant blue
+        
         return mapView
     }
     
@@ -35,11 +39,88 @@ struct RouteMapView: UIViewRepresentable {
         func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
             if let polyline = overlay as? MKPolyline {
                 let renderer = MKPolylineRenderer(polyline: polyline)
-                renderer.strokeColor = UIColor(ColorTheme.primary)
+                renderer.strokeColor = UIColor(red: 0.0, green: 0.5, blue: 1.0, alpha: 0.8)
                 renderer.lineWidth = 5
                 return renderer
             }
             return MKOverlayRenderer(overlay: overlay)
+        }
+        
+        // Customize the user location annotation view
+        func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+            if annotation is MKUserLocation {
+                // Use a standard annotation view for the user location
+                let identifier = "userLocation"
+                var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier)
+                
+                if annotationView == nil {
+                    annotationView = MKAnnotationView(annotation: annotation, reuseIdentifier: identifier)
+                    annotationView?.canShowCallout = false
+                } else {
+                    annotationView?.annotation = annotation
+                }
+                
+                // Create a custom user location marker
+                let dotSize = CGSize(width: 24, height: 24)
+                
+                UIGraphicsBeginImageContextWithOptions(dotSize, false, 0.0)
+                let context = UIGraphicsGetCurrentContext()
+                
+                // Draw outer circle (pulse effect)
+                context?.setFillColor(UIColor(red: 0.0, green: 0.5, blue: 1.0, alpha: 0.3).cgColor)
+                context?.fillEllipse(in: CGRect(origin: .zero, size: dotSize))
+                
+                // Draw inner circle (location dot)
+                let innerDotSize = CGSize(width: 12, height: 12)
+                let innerDotOrigin = CGPoint(x: (dotSize.width - innerDotSize.width) / 2,
+                                            y: (dotSize.height - innerDotSize.height) / 2)
+                context?.setFillColor(UIColor(red: 0.0, green: 0.5, blue: 1.0, alpha: 1.0).cgColor)
+                context?.fillEllipse(in: CGRect(origin: innerDotOrigin, size: innerDotSize))
+                
+                let image = UIGraphicsGetImageFromCurrentImageContext()
+                UIGraphicsEndImageContext()
+                
+                annotationView?.image = image
+                
+                // Add pulsing animation if not already added
+                if annotationView?.layer.animation(forKey: "pulse") == nil {
+                    // Create pulsing layer
+                    let pulseLayer = CALayer()
+                    pulseLayer.frame = CGRect(x: 0, y: 0, width: dotSize.width, height: dotSize.height)
+                    
+                    // Create pulse animation
+                    let pulseAnimation = CABasicAnimation(keyPath: "transform.scale")
+                    pulseAnimation.fromValue = 1.0
+                    pulseAnimation.toValue = 1.5
+                    pulseAnimation.duration = 1.0
+                    pulseAnimation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+                    pulseAnimation.autoreverses = true
+                    pulseAnimation.repeatCount = .infinity
+                    
+                    // Create opacity animation
+                    let opacityAnimation = CABasicAnimation(keyPath: "opacity")
+                    opacityAnimation.fromValue = 0.8
+                    opacityAnimation.toValue = 0.0
+                    opacityAnimation.duration = 1.0
+                    opacityAnimation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+                    opacityAnimation.autoreverses = true
+                    opacityAnimation.repeatCount = .infinity
+                    
+                    // Create animation group
+                    let animationGroup = CAAnimationGroup()
+                    animationGroup.animations = [pulseAnimation, opacityAnimation]
+                    animationGroup.duration = 2.0
+                    animationGroup.repeatCount = .infinity
+                    
+                    pulseLayer.add(animationGroup, forKey: "pulse")
+                    
+                    // Add the pulse layer
+                    annotationView?.layer.addSublayer(pulseLayer)
+                }
+                
+                return annotationView
+            }
+            return nil
         }
     }
 }
