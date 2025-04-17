@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>The Daily Mile needs your location to track your running routes and calculate distance.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>The Daily Mile needs your location to track your running routes and calculate distance, even when the app is in background.</string>
+</dict>
+</plist> 

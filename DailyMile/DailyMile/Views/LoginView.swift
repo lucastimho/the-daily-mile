@@ -6,6 +6,7 @@ struct LoginView: View {
     @State private var password: String = ""
     @State private var isShowingUserHint = false
     @State private var isLoggingIn = false
+    @State private var isShowingSignup = false
     
     var body: some View {
         ZStack {
@@ -96,6 +97,23 @@ struct LoginView: View {
                     .disabled(username.isEmpty || password.isEmpty || isLoggingIn)
                     .opacity((username.isEmpty || password.isEmpty) ? 0.6 : 1)
                     
+                    // Sign Up button
+                    Button(action: {
+                        isShowingSignup = true
+                    }) {
+                        Text("Create Account")
+                            .font(.headline)
+                            .foregroundColor(ColorTheme.primary)
+                            .padding(.vertical, 15)
+                            .frame(maxWidth: .infinity)
+                            .background(Color.clear)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(ColorTheme.primary, lineWidth: 2)
+                            )
+                    }
+                    .padding(.horizontal, 25)
+                    
                     // Demo users hint button
                     Button(action: {
                         isShowingUserHint.toggle()
@@ -103,6 +121,7 @@ struct LoginView: View {
                         Text("Show Demo Users")
                             .foregroundColor(ColorTheme.primary)
                     }
+                    .padding(.top, 5)
                     
                     if isShowingUserHint {
                         VStack(alignment: .leading, spacing: 10) {
@@ -135,6 +154,15 @@ struct LoginView: View {
                     .foregroundColor(ColorTheme.textSecondary)
                     .padding(.bottom, 20)
             }
+            
+            // Navigation to SignupView
+            .sheet(isPresented: $isShowingSignup) {
+                SignupView()
+                    .environmentObject(appState)
+            }
+        }
+        .onAppear {
+            appState.updateColorScheme()
         }
     }
 }

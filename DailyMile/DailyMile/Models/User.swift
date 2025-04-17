@@ -26,8 +26,8 @@ struct User: Identifiable {
     ]
     
     // Authentication method
-    static func authenticate(username: String, password: String) -> User? {
-        return demoUsers.first(where: { 
+    static func authenticate(username: String, password: String, users: [User]) -> User? {
+        return users.first(where: { 
             $0.username.lowercased() == username.lowercased() && 
             $0.password == password 
         })

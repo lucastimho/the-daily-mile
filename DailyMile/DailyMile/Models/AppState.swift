@@ -15,6 +15,7 @@ class AppState: ObservableObject {
     @Published var isLoggedIn: Bool = false
     @Published var currentUser: User?
     @Published var loginError: String?
+    @Published var signupError: String?
     
     // User profile data
     @Published var userProfile: UserProfile
@@ -27,11 +28,16 @@ class AppState: ObservableObject {
     @Published var isDemoMode: Bool = true
     @Published var themeMode: ThemeMode = .system
     
+    // Demo user storage - in a real app this would be persistent
+    @Published var users: [User]
+    
     // Theme color scheme computed property
     @Published var colorScheme: ColorScheme? = nil
     
     init(demoMode: Bool = true) {
         self.isDemoMode = demoMode
+        self.users = User.demoUsers // Start with demo users
+        
         if demoMode {
             // Use demo data for preview - but not logged in yet
             self.userProfile = UserProfile.demoProfiles[0]
@@ -45,7 +51,7 @@ class AppState: ObservableObject {
     
     // Login method
     func login(username: String, password: String) {
-        if let user = User.authenticate(username: username, password: password) {
+        if let user = User.authenticate(username: username, password: password, users: users) {
             currentUser = user
             userProfile = user.profile
             isLoggedIn = true
@@ -53,6 +59,58 @@ class AppState: ObservableObject {
         } else {
             loginError = "Invalid username or password"
         }
+    }
+    
+    // Signup method
+    func signup(username: String, password: String, confirmPassword: String, profile: UserProfile) -> Bool {
+        // Clear previous errors
+        signupError = nil
+        
+        // Validate username
+        if username.isEmpty {
+            signupError = "Username cannot be empty"
+            return false
+        }
+        
+        // Check if username already exists
+        if users.contains(where: { $0.username.lowercased() == username.lowercased() }) {
+            signupError = "Username already exists"
+            return false
+        }
+        
+        // Validate password
+        if password.isEmpty {
+            signupError = "Password cannot be empty"
+            return false
+        }
+        
+        if password.count < 6 {
+            signupError = "Password must be at least 6 characters"
+            return false
+        }
+        
+        // Confirm passwords match
+        if password != confirmPassword {
+            signupError = "Passwords do not match"
+            return false
+        }
+        
+        // Create the new user
+        let newUser = User(
+            username: username,
+            password: password,
+            profile: profile
+        )
+        
+        // Add the user to our collection
+        users.append(newUser)
+        
+        // Auto-login the user
+        currentUser = newUser
+        userProfile = profile
+        isLoggedIn = true
+        
+        return true
     }
     
     // Logout method
@@ -109,6 +167,22 @@ class AppState: ObservableObject {
             self.currentRunTime += 1
             // Simulate a 10-minute mile pace
             self.currentRunDistance += 1 / 600
+        }
+    }
+    
+    // Start a real run with location tracking
+    func startRun() {
+        isRunning = true
+        currentRunTime = 0
+        
+        // Timer for tracking elapsed time
+        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
+            guard let self = self, self.isRunning else {
+                timer.invalidate()
+                return
+            }
+            
+            self.currentRunTime += 1
         }
     }
     
