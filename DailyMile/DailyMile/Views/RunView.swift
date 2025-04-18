@@ -232,8 +232,10 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
 struct RunView: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var locationManager = LocationManager()
+    @StateObject private var weatherService = WeatherService()
     @State private var showingPostRunSummary = false
     @State private var tempWorkout: Workout?
+    @State private var showingWeather = false
     
     var body: some View {
         ZStack {
@@ -297,6 +299,37 @@ struct RunView: View {
                         )
                     }
                     .padding(.top, 24)
+                    
+                    // Weather toggle button
+                    Button(action: {
+                        showingWeather.toggle()
+                        
+                        if showingWeather && !appState.isDemoMode, let location = locationManager.location {
+                            weatherService.fetchWeather(for: location)
+                        } else if showingWeather && appState.isDemoMode {
+                            // Use a default location for demo mode
+                            let demoLocation = CLLocation(latitude: 37.7749, longitude: -122.4194)
+                            weatherService.fetchWeather(for: demoLocation)
+                        }
+                    }) {
+                        HStack {
+                            Image(systemName: showingWeather ? "chevron.up" : "chevron.down")
+                                .font(.caption)
+                            Text(showingWeather ? "Hide Weather" : "Show Weather")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                        }
+                        .foregroundColor(ColorTheme.primary)
+                        .padding(.vertical, 8)
+                    }
+                    .padding(.top, 8)
+                    
+                    // Weather information
+                    if showingWeather {
+                        WeatherView(weatherService: weatherService)
+                            .padding(.horizontal)
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
                     
                     Spacer()
                     
@@ -393,10 +426,21 @@ struct RunView: View {
         .navigationBarHidden(true)
         .sheet(isPresented: $showingPostRunSummary) {
             if let workout = tempWorkout {
-                RunSummaryView(workout: workout)
+                RunSummaryView(workout: workout, weatherData: weatherService)
                     .environmentObject(appState)
             }
         }
+        .onAppear {
+            // Prefetch weather on appear if location is available
+            if !appState.isDemoMode, let location = locationManager.location {
+                weatherService.fetchWeather(for: location)
+            } else {
+                // Use a default location for demo mode
+                let demoLocation = CLLocation(latitude: 37.7749, longitude: -122.4194)
+                weatherService.fetchWeather(for: demoLocation)
+            }
+        }
+        .animation(.easeInOut, value: showingWeather)
     }
     
     func formattedTime(_ timeInterval: TimeInterval) -> String {
@@ -460,8 +504,14 @@ struct RunSummaryView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.presentationMode) var presentationMode
     let workout: Workout
+    let weatherData: WeatherService?
     @State private var notes: String = ""
     @State private var mapRegion: MKCoordinateRegion?
+    
+    init(workout: Workout, weatherData: WeatherService? = nil) {
+        self.workout = workout
+        self.weatherData = weatherData
+    }
     
     var body: some View {
         NavigationView {
@@ -493,6 +543,40 @@ struct RunSummaryView: View {
                         Spacer()
                         Text("\(workout.calories)")
                             .fontWeight(.semibold)
+                    }
+                }
+                
+                // Weather section if available
+                if let weather = weatherData, weather.condition.isEmpty == false {
+                    Section(header: Text("Weather Conditions")) {
+                        HStack {
+                            Image(systemName: weather.conditionIcon)
+                                .font(.title2)
+                                .foregroundColor(weatherIconColor(condition: weather.condition))
+                                .symbolRenderingMode(.multicolor)
+                                .frame(width: 40)
+                            
+                            VStack(alignment: .leading) {
+                                Text(weather.condition)
+                                    .fontWeight(.semibold)
+                                
+                                Text("\(Int(weather.temperature))°F, feels like \(Int(weather.feelsLike))°F")
+                                    .font(.subheadline)
+                                    .foregroundColor(ColorTheme.textSecondary)
+                            }
+                            
+                            Spacer()
+                            
+                            VStack(alignment: .trailing, spacing: 4) {
+                                Text("Humidity: \(weather.humidity)%")
+                                    .font(.caption)
+                                
+                                Text("Wind: \(Int(weather.windSpeed)) mph")
+                                    .font(.caption)
+                            }
+                            .foregroundColor(ColorTheme.textSecondary)
+                        }
+                        .padding(.vertical, 4)
                     }
                 }
                 
@@ -569,9 +653,37 @@ struct RunSummaryView: View {
         
         return MKCoordinateRegion(center: center, span: span)
     }
+    
+    // Return appropriate color based on weather condition
+    private func weatherIconColor(condition: String) -> Color {
+        switch condition.lowercased() {
+        case _ where condition.contains("clear"):
+            return .yellow
+        case _ where condition.contains("cloud"):
+            return .gray
+        case _ where condition.contains("rain") || condition.contains("drizzle"):
+            return .blue
+        case _ where condition.contains("snow"):
+            return .cyan
+        case _ where condition.contains("thunderstorm"):
+            return .purple
+        default:
+            return .blue
+        }
+    }
 }
 
 #Preview {
-    RunView()
+    let workout = Workout.demoWorkouts[0]
+    
+    let weatherService = WeatherService()
+    weatherService.temperature = 75.0
+    weatherService.feelsLike = 76.5
+    weatherService.condition = "Mostly Sunny"
+    weatherService.conditionIcon = "sun.max"
+    weatherService.humidity = 55
+    weatherService.windSpeed = 7.3
+    
+    return RunSummaryView(workout: workout, weatherData: weatherService)
         .environmentObject(AppState(demoMode: true))
 } 
