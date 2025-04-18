@@ -99,17 +99,21 @@ struct HomeView: View {
                     }
                     .padding(.horizontal)
                     
-                    // Weekly stats
-                    WeeklyStatsCard()
-                    
                     // Recent workouts
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Recent Workouts")
                             .font(.headline)
                             .foregroundColor(ColorTheme.textPrimary)
                         
-                        ForEach(appState.workouts.prefix(3)) { workout in
-                            WorkoutCard(workout: workout)
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 16) {
+                                ForEach(appState.workouts.prefix(5)) { workout in
+                                    WorkoutCard(workout: workout)
+                                        .frame(width: 280)
+                                }
+                            }
+                            .padding(.horizontal, 4)
+                            .padding(.bottom, 8)
                         }
                     }
                     .padding(.horizontal)
@@ -247,6 +251,7 @@ struct WeeklyStatsCard: View {
             }
         }
         .padding()
+        .frame(maxWidth: .infinity)
         .background(ColorTheme.cardBackground)
         .cornerRadius(12)
     }
@@ -378,7 +383,7 @@ struct WorkoutCard: View {
             }
         }
         .padding()
-        .frame(width: 280)
+        .frame(maxWidth: .infinity)
         .background(ColorTheme.cardBackground)
         .cornerRadius(16)
     }
