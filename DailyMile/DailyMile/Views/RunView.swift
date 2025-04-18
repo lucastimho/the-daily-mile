@@ -287,7 +287,7 @@ struct RunView: View {
                         RunStatView(
                             title: "DISTANCE", 
                             value: String(format: "%.2f", appState.isDemoMode ? appState.currentRunDistance : locationManager.totalDistance), 
-                            unit: "MI"
+                            unit: appState.unitPreference == .metric ? "KM" : "MI"
                         )
                         
                         RunStatView(title: "TIME", value: formattedTime(appState.currentRunTime), unit: "")
@@ -295,7 +295,7 @@ struct RunView: View {
                         RunStatView(
                             title: "PACE", 
                             value: appState.isDemoMode ? currentPace() : currentLivePace(), 
-                            unit: "/MI"
+                            unit: appState.unitPreference == .metric ? "/KM" : "/MI"
                         )
                     }
                     .padding(.top, 24)
@@ -459,20 +459,36 @@ struct RunView: View {
         guard appState.currentRunDistance > 0 else { return "--:--" }
         
         let paceSeconds = appState.currentRunTime / appState.currentRunDistance
-        let minutes = Int(paceSeconds) / 60
-        let seconds = Int(paceSeconds) % 60
         
-        return String(format: "%d:%02d", minutes, seconds)
+        if appState.unitPreference == .metric {
+            // Convert mile pace to km pace
+            let kmPaceSeconds = paceSeconds / 1.60934
+            let minutes = Int(kmPaceSeconds) / 60
+            let seconds = Int(kmPaceSeconds) % 60
+            return String(format: "%d:%02d", minutes, seconds)
+        } else {
+            let minutes = Int(paceSeconds) / 60
+            let seconds = Int(paceSeconds) % 60
+            return String(format: "%d:%02d", minutes, seconds)
+        }
     }
     
     func currentLivePace() -> String {
         guard locationManager.totalDistance > 0 else { return "--:--" }
         
         let paceSeconds = appState.currentRunTime / locationManager.totalDistance
-        let minutes = Int(paceSeconds) / 60
-        let seconds = Int(paceSeconds) % 60
         
-        return String(format: "%d:%02d", minutes, seconds)
+        if appState.unitPreference == .metric {
+            // Convert mile pace to km pace
+            let kmPaceSeconds = paceSeconds / 1.60934
+            let minutes = Int(kmPaceSeconds) / 60
+            let seconds = Int(kmPaceSeconds) % 60
+            return String(format: "%d:%02d", minutes, seconds)
+        } else {
+            let minutes = Int(paceSeconds) / 60
+            let seconds = Int(paceSeconds) % 60
+            return String(format: "%d:%02d", minutes, seconds)
+        }
     }
 }
 

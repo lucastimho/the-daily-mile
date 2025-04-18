@@ -65,7 +65,8 @@ struct HistoryView: View {
                         
                         HistoryStatCard(
                             title: "Distance",
-                            value: String(format: "%.1f mi", totalMonthDistance()),
+                            value: String(format: "%.1f", totalMonthDistance()) + 
+                                  (appState.unitPreference == .metric ? " km" : " mi"),
                             icon: "map",
                             color: ColorTheme.success
                         )
@@ -336,6 +337,7 @@ struct DayCell: View {
 
 // Renamed from WorkoutCard to HistoryWorkoutCard to avoid duplication
 struct HistoryWorkoutCard: View {
+    @EnvironmentObject var appState: AppState
     let workout: Workout
     
     var body: some View {
@@ -358,7 +360,7 @@ struct HistoryWorkoutCard: View {
                     Image(systemName: "ruler")
                         .foregroundColor(ColorTheme.success)
                     
-                    Text(String(format: "%.2f mi", workout.distance))
+                    Text(appState.formatDistance(workout.distance))
                         .font(.headline)
                         .foregroundColor(ColorTheme.textPrimary)
                 }
@@ -385,7 +387,7 @@ struct HistoryWorkoutCard: View {
                         .font(.caption)
                         .foregroundColor(ColorTheme.textSecondary)
                     
-                    Text(workout.formattedPace)
+                    Text(appState.formatPace(workout.avgPace))
                         .font(.subheadline)
                         .foregroundColor(ColorTheme.textPrimary)
                 }
@@ -454,6 +456,7 @@ struct HistoryStatCard: View {
 }
 
 struct WorkoutDetailView: View {
+    @EnvironmentObject var appState: AppState
     let workout: Workout
     
     var body: some View {
@@ -470,7 +473,7 @@ struct WorkoutDetailView: View {
                 
                 // Quick stats
                 HStack(spacing: 16) {
-                    DetailStatCard(title: "Distance", value: String(format: "%.2f", workout.distance), unit: "mi")
+                    DetailStatCard(title: "Distance", value: appState.formatDistance(workout.distance), unit: "")
                     DetailStatCard(title: "Duration", value: workout.formattedDuration, unit: "")
                     DetailStatCard(title: "Calories", value: "\(workout.calories)", unit: "cal")
                 }
@@ -485,14 +488,10 @@ struct WorkoutDetailView: View {
                         Image(systemName: "speedometer")
                             .foregroundColor(ColorTheme.secondary)
                         
-                        Text(workout.formattedPace)
+                        Text(appState.formatPace(workout.avgPace))
                             .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(ColorTheme.textPrimary)
-                        
-                        Text("per mile")
-                            .font(.subheadline)
-                            .foregroundColor(ColorTheme.textSecondary)
                     }
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)

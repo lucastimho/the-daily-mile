@@ -59,10 +59,10 @@ struct ProfileView: View {
                     } else {
                         ProfileInfoRow(label: "Name", value: appState.userProfile.name)
                         ProfileInfoRow(label: "Age", value: "\(appState.userProfile.age) years")
-                        ProfileInfoRow(label: "Weight", value: "\(appState.userProfile.weight) kg")
-                        ProfileInfoRow(label: "Height", value: "\(appState.userProfile.height) cm")
+                        ProfileInfoRow(label: "Weight", value: appState.formatWeight(appState.userProfile.weight))
+                        ProfileInfoRow(label: "Height", value: appState.formatHeight(appState.userProfile.height))
                         ProfileInfoRow(label: "Experience", value: appState.userProfile.experience.rawValue)
-                        ProfileInfoRow(label: "Weekly Goal", value: "\(appState.userProfile.weeklyGoal) miles")
+                        ProfileInfoRow(label: "Weekly Goal", value: appState.formatDistance(Double(appState.userProfile.weeklyGoal)))
                     }
                 }
                 
@@ -75,6 +75,22 @@ struct ProfileView: View {
                     }
                     .onChange(of: appState.themeMode) { _ in
                         appState.updateColorScheme()
+                    }
+                }
+                
+                // Measurement Units
+                Section(header: Text("Measurement Units")) {
+                    Toggle(isOn: Binding(
+                        get: { appState.unitPreference == .imperial },
+                        set: { appState.unitPreference = $0 ? .imperial : .metric }
+                    )) {
+                        HStack {
+                            Text("Imperial Units")
+                            Spacer()
+                            Text("(miles, pounds, feet)")
+                                .font(.caption)
+                                .foregroundColor(ColorTheme.textSecondary)
+                        }
                     }
                 }
                 

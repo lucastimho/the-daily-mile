@@ -11,6 +11,10 @@ struct HomeView: View {
         var id: String { self.rawValue }
     }
     
+    var weeklyGoalProgress: Double {
+        appState.weeklyGoalProgress()
+    }
+    
     var body: some View {
         NavigationView {
             ScrollView {
@@ -60,6 +64,16 @@ struct HomeView: View {
                     }
                     .padding(.horizontal)
                     
+                    // Weekly Stats
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Weekly Summary")
+                            .font(.headline)
+                            .foregroundColor(ColorTheme.textPrimary)
+                        
+                        WeeklyStatsCard()
+                    }
+                    .padding(.horizontal)
+                    
                     // Quick stats
                     HStack(spacing: 16) {
                         StatCard(
@@ -85,6 +99,9 @@ struct HomeView: View {
                     }
                     .padding(.horizontal)
                     
+                    // Weekly stats
+                    WeeklyStatsCard()
+                    
                     // Recent workouts
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Recent Workouts")
@@ -103,6 +120,13 @@ struct HomeView: View {
             .navigationBarTitleDisplayMode(.inline)
             .background(ColorTheme.background)
         }
+    }
+    
+    var formatter: NumberFormatter {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .percent
+        formatter.maximumFractionDigits = 0
+        return formatter
     }
 }
 
@@ -161,42 +185,65 @@ struct StatCard: View {
     }
 }
 
-struct WorkoutCard: View {
-    let workout: Workout
+struct WeeklyStatsCard: View {
+    @EnvironmentObject var appState: AppState
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 16) {
+            // Header
             HStack {
-                Image(systemName: "figure.run")
-                    .foregroundColor(ColorTheme.primary)
-                
-                Text(formattedDate())
+                Text("Weekly Stats")
                     .font(.headline)
+                    .fontWeight(.bold)
                     .foregroundColor(ColorTheme.textPrimary)
                 
                 Spacer()
                 
-                Text(String(format: "%.1f mi", workout.distance))
-                    .fontWeight(.semibold)
-                    .foregroundColor(ColorTheme.textPrimary)
-            }
-            
-            HStack {
-                Label(workout.formattedDuration, systemImage: "timer")
-                    .font(.subheadline)
-                
-                Spacer()
-                
-                Label(workout.formattedPace, systemImage: "speedometer")
-                    .font(.subheadline)
-            }
-            .foregroundColor(ColorTheme.textSecondary)
-            
-            if let notes = workout.notes, !notes.isEmpty {
-                Text(notes)
+                // Date range for this week
+                Text(weekDateRangeFormatted())
                     .font(.caption)
                     .foregroundColor(ColorTheme.textSecondary)
-                    .lineLimit(1)
+            }
+            
+            Divider()
+            
+            // Stats grid
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                // Distance
+                WeeklyStatItem(
+                    title: "Distance",
+                    value: appState.formatDistance(appState.totalDistanceThisWeek()),
+                    icon: "figure.walk",
+                    color: ColorTheme.info,
+                    tooltip: "Total distance ran this week"
+                )
+                
+                // Workouts
+                WeeklyStatItem(
+                    title: "Workouts",
+                    value: "\(workoutsThisWeek())",
+                    icon: "stopwatch",
+                    color: ColorTheme.secondary,
+                    tooltip: "Number of workouts this week"
+                )
+                
+                // Progress to goal
+                WeeklyStatItem(
+                    title: "Goal Progress",
+                    value: "\(Int(appState.weeklyGoalProgress() * 100))%",
+                    icon: "target",
+                    color: ColorTheme.primary,
+                    tooltip: "Progress toward weekly goal"
+                )
+                
+                // Average pace
+                WeeklyStatItem(
+                    title: "Avg Pace",
+                    value: averagePaceThisWeek(),
+                    icon: "speedometer",
+                    color: ColorTheme.accent,
+                    tooltip: "Average pace for all workouts this week"
+                )
             }
         }
         .padding()
@@ -204,11 +251,150 @@ struct WorkoutCard: View {
         .cornerRadius(12)
     }
     
-    func formattedDate() -> String {
+    // Helper methods
+    private func workoutsThisWeek() -> Int {
+        let calendar = Calendar.current
+        let weekStart = calendar.startOfDay(for: calendar.date(byAdding: .day, value: -7, to: Date())!)
+        
+        return appState.workouts.filter { $0.date >= weekStart }.count
+    }
+    
+    private func averagePaceThisWeek() -> String {
+        let calendar = Calendar.current
+        let weekStart = calendar.startOfDay(for: calendar.date(byAdding: .day, value: -7, to: Date())!)
+        
+        let workoutsThisWeek = appState.workouts.filter { $0.date >= weekStart }
+        guard !workoutsThisWeek.isEmpty else { return "--:--" }
+        
+        let totalSeconds = workoutsThisWeek.reduce(0.0) { $0 + $1.avgPace * $1.distance }
+        let totalDistance = workoutsThisWeek.reduce(0.0) { $0 + $1.distance }
+        
+        if totalDistance == 0 { return "--:--" }
+        
+        let avgPaceSeconds = totalSeconds / totalDistance
+        return appState.formatPace(avgPaceSeconds)
+    }
+    
+    private func weekDateRangeFormatted() -> String {
+        let calendar = Calendar.current
+        let today = Date()
+        let weekStart = calendar.date(byAdding: .day, value: -7, to: today)!
+        
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MMM d"
+        
+        return "\(dateFormatter.string(from: weekStart)) - \(dateFormatter.string(from: today))"
+    }
+}
+
+struct WeeklyStatItem: View {
+    let title: String
+    let value: String
+    let icon: String
+    let color: Color
+    let tooltip: String
+    
+    @State private var showingTooltip = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Image(systemName: icon)
+                    .foregroundColor(color)
+                
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(ColorTheme.textSecondary)
+                
+                Spacer()
+                
+                Button(action: {
+                    showingTooltip.toggle()
+                }) {
+                    Image(systemName: "info.circle")
+                        .font(.caption)
+                        .foregroundColor(ColorTheme.textSecondary.opacity(0.6))
+                }
+                .popover(isPresented: $showingTooltip) {
+                    Text(tooltip)
+                        .font(.caption)
+                        .padding(8)
+                }
+            }
+            
+            Text(value)
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundColor(ColorTheme.textPrimary)
+        }
+        .padding()
+        .background(ColorTheme.cardBackground.opacity(0.5))
+        .cornerRadius(8)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(color.opacity(0.2), lineWidth: 1)
+        )
+    }
+}
+
+struct WorkoutCard: View {
+    @EnvironmentObject var appState: AppState
+    let workout: Workout
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Date and distance
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(formattedDate(workout.date))
+                        .font(.headline)
+                        .foregroundColor(ColorTheme.textPrimary)
+                    
+                    Text(formattedTime(workout.date))
+                        .font(.caption)
+                        .foregroundColor(ColorTheme.textSecondary)
+                }
+                
+                Spacer()
+                
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text(appState.formatDistance(workout.distance))
+                        .font(.headline)
+                        .foregroundColor(ColorTheme.textPrimary)
+                    
+                    Text(appState.formatPace(workout.avgPace))
+                        .font(.caption)
+                        .foregroundColor(ColorTheme.textSecondary)
+                }
+            }
+            
+            // Optional note preview
+            if let notes = workout.notes, !notes.isEmpty {
+                Text(notes)
+                    .font(.caption)
+                    .foregroundColor(ColorTheme.textSecondary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+            }
+        }
+        .padding()
+        .frame(width: 280)
+        .background(ColorTheme.cardBackground)
+        .cornerRadius(16)
+    }
+    
+    private func formattedDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .none
-        return formatter.string(from: workout.date)
+        return formatter.string(from: date)
+    }
+    
+    private func formattedTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .none
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
     }
 }
 
@@ -368,4 +554,14 @@ struct WidthPreferenceKey: PreferenceKey {
 #Preview {
     HomeView()
         .environmentObject(AppState(demoMode: true))
+}
+
+#Preview("Weekly Stats Card") {
+    ScrollView {
+        VStack {
+            WeeklyStatsCard()
+                .padding()
+        }
+    }
+    .environmentObject(AppState(demoMode: true))
 } 

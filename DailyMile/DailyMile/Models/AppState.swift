@@ -10,6 +10,14 @@ enum ThemeMode: String, CaseIterable, Identifiable {
     var id: String { self.rawValue }
 }
 
+// Unit preference enum
+enum UnitPreference: String, CaseIterable, Identifiable {
+    case metric = "Metric"
+    case imperial = "Imperial"
+    
+    var id: String { self.rawValue }
+}
+
 class AppState: ObservableObject {
     // Authentication state
     @Published var isLoggedIn: Bool = false
@@ -27,6 +35,7 @@ class AppState: ObservableObject {
     @Published var currentRunDistance: Double = 0
     @Published var isDemoMode: Bool = true
     @Published var themeMode: ThemeMode = .system
+    @Published var unitPreference: UnitPreference = .metric
     
     // Demo user storage - in a real app this would be persistent
     @Published var users: [User]
@@ -46,6 +55,55 @@ class AppState: ObservableObject {
             // In a real app, we would load from persistent storage
             self.userProfile = UserProfile(name: "", age: 0, weight: 0, height: 0, experience: .beginner, weeklyGoal: 0)
             self.workouts = []
+        }
+    }
+    
+    // Unit conversion functions
+    func formatWeight(_ weightInKg: Double) -> String {
+        switch unitPreference {
+        case .metric:
+            return String(format: "%.1f kg", weightInKg)
+        case .imperial:
+            let pounds = weightInKg * 2.20462
+            return String(format: "%.1f lbs", pounds)
+        }
+    }
+    
+    func formatHeight(_ heightInCm: Double) -> String {
+        switch unitPreference {
+        case .metric:
+            return String(format: "%.1f cm", heightInCm)
+        case .imperial:
+            let totalInches = heightInCm / 2.54
+            let feet = Int(totalInches / 12)
+            let inches = Int(totalInches.truncatingRemainder(dividingBy: 12))
+            return String(format: "%d'%d\"", feet, inches)
+        }
+    }
+    
+    func formatDistance(_ distanceInMiles: Double) -> String {
+        switch unitPreference {
+        case .metric:
+            let kilometers = distanceInMiles * 1.60934
+            return String(format: "%.2f km", kilometers)
+        case .imperial:
+            return String(format: "%.2f mi", distanceInMiles)
+        }
+    }
+    
+    func formatPace(_ paceInMinPerMile: TimeInterval) -> String {
+        let minutes = Int(paceInMinPerMile) / 60
+        let seconds = Int(paceInMinPerMile) % 60
+        
+        switch unitPreference {
+        case .metric:
+            // Convert to min/km (pace is faster for km since km is shorter than mile)
+            let paceInMinPerKm = paceInMinPerMile / 1.60934
+            let kmMinutes = Int(paceInMinPerKm) / 60
+            let kmSeconds = Int(paceInMinPerKm) % 60
+            return String(format: "%d:%02d /km", kmMinutes, kmSeconds)
+        case .imperial:
+            return String(format: "%d:%02d /mi", minutes, seconds)
         }
     }
     
