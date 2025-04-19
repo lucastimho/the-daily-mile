@@ -33,14 +33,14 @@ struct ProfileView: View {
                         HStack {
                             TextField("Weight", text: $weight)
                                 .keyboardType(.decimalPad)
-                            Text("kg")
+                            Text(appState.unitPreference == .metric ? "kg" : "lbs")
                                 .foregroundColor(ColorTheme.textSecondary)
                         }
                         
                         HStack {
                             TextField("Height", text: $height)
                                 .keyboardType(.decimalPad)
-                            Text("cm")
+                            Text(appState.unitPreference == .metric ? "cm" : "in")
                                 .foregroundColor(ColorTheme.textSecondary)
                         }
                         
@@ -53,7 +53,7 @@ struct ProfileView: View {
                         HStack {
                             TextField("Weekly Goal", text: $weeklyGoal)
                                 .keyboardType(.numberPad)
-                            Text("miles")
+                            Text(appState.unitPreference == .metric ? "km" : "miles")
                                 .foregroundColor(ColorTheme.textSecondary)
                         }
                     } else {
@@ -179,10 +179,20 @@ struct ProfileView: View {
     private func resetLocalState() {
         name = appState.userProfile.name
         age = "\(appState.userProfile.age)"
-        weight = "\(appState.userProfile.weight)"
-        height = "\(appState.userProfile.height)"
+        
+        // Convert values based on current unit preference
+        if appState.unitPreference == .metric {
+            weight = "\(appState.userProfile.weight)"
+            height = "\(appState.userProfile.height)"
+            weeklyGoal = "\(appState.userProfile.weeklyGoal)"
+        } else {
+            // Convert from metric to imperial
+            weight = String(format: "%.1f", appState.userProfile.weight * 2.20462) // kg to lbs
+            height = String(format: "%.1f", appState.userProfile.height * 0.393701) // cm to inches
+            weeklyGoal = String(format: "%.1f", Double(appState.userProfile.weeklyGoal) * 0.621371) // km to miles
+        }
+        
         experience = appState.userProfile.experience
-        weeklyGoal = "\(appState.userProfile.weeklyGoal)"
     }
     
     private func saveChanges() {
@@ -190,9 +200,16 @@ struct ProfileView: View {
         // In a real app, we would validate inputs and handle errors
         
         let ageValue = Int(age) ?? appState.userProfile.age
-        let weightValue = Double(weight) ?? appState.userProfile.weight
-        let heightValue = Double(height) ?? appState.userProfile.height
-        let goalValue = Int(weeklyGoal) ?? appState.userProfile.weeklyGoal
+        var weightValue = Double(weight) ?? appState.userProfile.weight
+        var heightValue = Double(height) ?? appState.userProfile.height
+        var goalValue = Int(weeklyGoal) ?? appState.userProfile.weeklyGoal
+        
+        // Convert from imperial to metric if needed
+        if appState.unitPreference == .imperial {
+            weightValue = weightValue / 2.20462 // lbs to kg
+            heightValue = heightValue / 0.393701 // inches to cm
+            goalValue = Int(Double(goalValue) / 0.621371) // miles to km
+        }
         
         let updatedProfile = UserProfile(
             name: name,
