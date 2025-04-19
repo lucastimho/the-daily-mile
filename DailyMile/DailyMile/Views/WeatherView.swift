@@ -2,6 +2,7 @@ import SwiftUI
 
 struct WeatherView: View {
     @ObservedObject var weatherService: WeatherService
+    @State private var showingErrorInfo = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -19,76 +20,112 @@ struct WeatherView: View {
                 }
             }
             
-            if let error = weatherService.errorMessage {
-                Text(error)
-                    .font(.caption)
-                    .foregroundColor(ColorTheme.error)
-                    .padding(.top, 4)
-            } else {
-                HStack(spacing: 20) {
-                    // Temperature and condition
-                    VStack(alignment: .leading, spacing: 5) {
-                        HStack(alignment: .top, spacing: 2) {
-                            Text("\(Int(weatherService.temperature))")
-                                .font(.system(size: 30, weight: .bold))
-                                .foregroundColor(ColorTheme.textPrimary)
-                            
-                            Text("°F")
-                                .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(ColorTheme.textSecondary)
-                                .padding(.top, 2)
-                        }
+            // Weather data always shown regardless of errors
+            HStack(spacing: 20) {
+                // Temperature and condition
+                VStack(alignment: .leading, spacing: 5) {
+                    HStack(alignment: .top, spacing: 2) {
+                        Text("\(Int(weatherService.temperature))")
+                            .font(.system(size: 30, weight: .bold))
+                            .foregroundColor(ColorTheme.textPrimary)
                         
-                        Text(weatherService.condition)
-                            .font(.subheadline)
+                        Text("°F")
+                            .font(.system(size: 20, weight: .medium))
                             .foregroundColor(ColorTheme.textSecondary)
+                            .padding(.top, 2)
                     }
                     
-                    Spacer()
-                    
-                    // Weather icon
-                    Image(systemName: weatherService.conditionIcon)
-                        .font(.system(size: 36))
-                        .foregroundColor(weatherIconColor(condition: weatherService.condition))
-                        .symbolRenderingMode(.multicolor)
+                    Text(weatherService.condition)
+                        .font(.subheadline)
+                        .foregroundColor(ColorTheme.textSecondary)
                 }
                 
-                // Additional weather details
-                HStack(spacing: 20) {
-                    // Feels like
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Feels like")
-                            .font(.caption)
-                            .foregroundColor(ColorTheme.textSecondary)
-                        
-                        Text("\(Int(weatherService.feelsLike))°F")
-                            .font(.callout)
-                            .foregroundColor(ColorTheme.textPrimary)
-                    }
+                Spacer()
+                
+                // Weather icon
+                Image(systemName: weatherService.conditionIcon)
+                    .font(.system(size: 36))
+                    .foregroundColor(weatherIconColor(condition: weatherService.condition))
+                    .symbolRenderingMode(.multicolor)
+            }
+            
+            // Additional weather details
+            HStack(spacing: 20) {
+                // Feels like
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Feels like")
+                        .font(.caption)
+                        .foregroundColor(ColorTheme.textSecondary)
                     
-                    // Humidity
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Humidity")
-                            .font(.caption)
-                            .foregroundColor(ColorTheme.textSecondary)
-                        
-                        Text("\(weatherService.humidity)%")
-                            .font(.callout)
-                            .foregroundColor(ColorTheme.textPrimary)
-                    }
+                    Text("\(Int(weatherService.feelsLike))°F")
+                        .font(.callout)
+                        .foregroundColor(ColorTheme.textPrimary)
+                }
+                
+                // Humidity
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Humidity")
+                        .font(.caption)
+                        .foregroundColor(ColorTheme.textSecondary)
                     
-                    // Wind
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Wind")
-                            .font(.caption)
-                            .foregroundColor(ColorTheme.textSecondary)
-                        
-                        Text("\(Int(weatherService.windSpeed)) mph")
-                            .font(.callout)
-                            .foregroundColor(ColorTheme.textPrimary)
-                    }
+                    Text("\(weatherService.humidity)%")
+                        .font(.callout)
+                        .foregroundColor(ColorTheme.textPrimary)
+                }
+                
+                // Wind
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Wind")
+                        .font(.caption)
+                        .foregroundColor(ColorTheme.textSecondary)
+                    
+                    Text("\(Int(weatherService.windSpeed)) mph")
+                        .font(.callout)
+                        .foregroundColor(ColorTheme.textPrimary)
+                }
+                
+                Spacer()
+            }
+            
+            // Show error message if there is one
+            if let error = weatherService.errorMessage {
+                Divider()
+                    .padding(.vertical, 4)
+                
+                HStack(alignment: .center, spacing: 4) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .foregroundColor(ColorTheme.warning)
+                        .font(.caption)
+                    
+                    Text("Using simulated data")
+                        .font(.caption)
+                        .foregroundColor(ColorTheme.textSecondary)
                     
                     Spacer()
+                    
+                    Button {
+                        showingErrorInfo.toggle()
+                    } label: {
+                        Image(systemName: "info.circle")
+                            .foregroundColor(ColorTheme.textSecondary)
+                            .font(.caption)
+                    }
+                    .popover(isPresented: $showingErrorInfo) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Weather API Error")
+                                .font(.headline)
+                            
+                            Text(error)
+                                .font(.caption)
+                            
+                            Divider()
+                            
+                            Text("Showing simulated weather data instead.")
+                                .font(.caption)
+                        }
+                        .padding()
+                        .frame(width: 250)
+                    }
                 }
             }
         }
@@ -117,20 +154,37 @@ struct WeatherView: View {
     }
 }
 
-#Preview {
-    let weatherService = WeatherService()
-    // Set some demo values
-    weatherService.temperature = 72.5
-    weatherService.feelsLike = 74.0
-    weatherService.condition = "Partly Cloudy"
-    weatherService.conditionIcon = "cloud.sun"
-    weatherService.humidity = 65
-    weatherService.windSpeed = 8.5
-    
-    return VStack {
-        WeatherView(weatherService: weatherService)
-            .padding()
-        Spacer()
+// Simplified preview without any local variables to avoid buildExpression errors
+struct WeatherView_Previews: PreviewProvider {
+    static var previews: some View {
+        Group {
+            // Normal weather preview
+            WeatherView(weatherService: createDemoWeatherService(withError: false))
+                .padding()
+                .previewDisplayName("Normal Weather")
+            
+            // Error weather preview
+            WeatherView(weatherService: createDemoWeatherService(withError: true))
+                .padding()
+                .previewDisplayName("Error Weather")
+        }
+        .background(ColorTheme.background)
     }
-    .background(ColorTheme.background)
+    
+    // Helper function to create demo weather service
+    static func createDemoWeatherService(withError: Bool) -> WeatherService {
+        let service = WeatherService()
+        service.temperature = 72.5
+        service.feelsLike = 74.0
+        service.condition = "Partly Cloudy"
+        service.conditionIcon = "cloud.sun"
+        service.humidity = 65
+        service.windSpeed = 8.5
+        
+        if withError {
+            service.errorMessage = "API key invalid or expired"
+        }
+        
+        return service
+    }
 } 

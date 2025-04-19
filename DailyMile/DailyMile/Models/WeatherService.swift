@@ -11,7 +11,12 @@ class WeatherService: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
     
-    private let apiKey = "demo_key" // Replace with your OpenWeatherMap API key
+    // The API key - replace this with your actual key
+    // Using a direct string here instead of accessing APIKeys to avoid compilation issues
+    private let apiKey = "2a461a2a326e21e9593c790f1a79e5b0"
+    
+    // Track if we're using simulated data
+    private var isUsingSimulatedData = false
     
     func fetchWeather(for location: CLLocation) {
         isLoading = true
@@ -20,16 +25,18 @@ class WeatherService: ObservableObject {
         let latitude = location.coordinate.latitude
         let longitude = location.coordinate.longitude
         
-        // For demo purposes, simulate weather data rather than making actual API calls
-        simulateWeatherData()
+        // If using the demo key, simulate weather data
+        if apiKey == "your_api_key_here" || apiKey == "demo_key" {
+            simulateWeather()
+            return
+        }
         
-        // In a real app, you would make an API call:
-        /*
+        // Try to get real weather data
         let urlString = "https://api.openweathermap.org/data/2.5/weather?lat=\(latitude)&lon=\(longitude)&units=imperial&appid=\(apiKey)"
+        print("📍 Fetching weather from: \(urlString)")
         
         guard let url = URL(string: urlString) else {
-            self.isLoading = false
-            self.errorMessage = "Invalid URL"
+            self.fallbackToSimulatedWeather(error: "Invalid URL")
             return
         }
         
@@ -40,22 +47,56 @@ class WeatherService: ObservableObject {
                 self.isLoading = false
                 
                 if let error = error {
-                    self.errorMessage = "Network error: \(error.localizedDescription)"
+                    print("⚠️ Weather API network error: \(error.localizedDescription)")
+                    self.fallbackToSimulatedWeather(error: "Network error: \(error.localizedDescription)")
                     return
                 }
                 
+                // Check for HTTP errors
+                if let httpResponse = response as? HTTPURLResponse {
+                    print("📊 Weather API HTTP status code: \(httpResponse.statusCode)")
+                    
+                    if httpResponse.statusCode != 200 {
+                        self.fallbackToSimulatedWeather(error: "HTTP error: \(httpResponse.statusCode)")
+                        return
+                    }
+                }
+                
                 guard let data = data else {
-                    self.errorMessage = "No data received"
+                    print("⚠️ Weather API: No data received")
+                    self.fallbackToSimulatedWeather(error: "No data received")
                     return
+                }
+                
+                // Print the raw JSON data for debugging
+                if let jsonString = String(data: data, encoding: .utf8) {
+                    print("🌤️ Weather API raw response: \(jsonString)")
                 }
                 
                 do {
                     // Parse JSON response
-                    if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-                       let main = json["main"] as? [String: Any],
-                       let weather = (json["weather"] as? [[String: Any]])?.first,
-                       let wind = json["wind"] as? [String: Any] {
+                    let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+                    
+                    // Check if response contains an error message
+                    if let message = json?["message"] as? String {
+                        print("⚠️ Weather API error message: \(message)")
+                        self.fallbackToSimulatedWeather(error: "API error: \(message)")
+                        return
+                    }
+                    
+                    // Verify the structure of the JSON to help debugging
+                    let hasMain = json?["main"] != nil
+                    let hasWeather = (json?["weather"] as? [[String: Any]])?.first != nil
+                    let hasWind = json?["wind"] != nil
+                    
+                    print("📋 Weather data structure check - main: \(hasMain), weather: \(hasWeather), wind: \(hasWind)")
+                    
+                    if let main = json?["main"] as? [String: Any],
+                       let weatherArray = json?["weather"] as? [[String: Any]],
+                       let weather = weatherArray.first,
+                       let wind = json?["wind"] as? [String: Any] {
                         
+                        self.isUsingSimulatedData = false
                         self.temperature = (main["temp"] as? Double) ?? 0
                         self.feelsLike = (main["feels_like"] as? Double) ?? 0
                         self.humidity = (main["humidity"] as? Int) ?? 0
@@ -65,21 +106,37 @@ class WeatherService: ObservableObject {
                         // Map weather condition to SF Symbol
                         let weatherId = (weather["id"] as? Int) ?? 800
                         self.conditionIcon = self.getWeatherIcon(for: weatherId)
+                        
+                        print("✅ Successfully parsed weather data: \(self.condition), \(self.temperature)°F")
                     } else {
-                        self.errorMessage = "Invalid weather data format"
+                        print("⚠️ Weather API: Invalid data format - couldn't extract main, weather, or wind")
+                        self.fallbackToSimulatedWeather(error: "Invalid weather data format")
                     }
                 } catch {
-                    self.errorMessage = "JSON parsing error: \(error.localizedDescription)"
+                    print("⚠️ Weather API JSON parsing error: \(error.localizedDescription)")
+                    self.fallbackToSimulatedWeather(error: "JSON parsing error: \(error.localizedDescription)")
                 }
             }
         }
         
         task.resume()
-        */
+    }
+    
+    // Fallback to simulated data with an error message
+    private func fallbackToSimulatedWeather(error: String) {
+        errorMessage = error
+        print("⚠️ Weather API error. Falling back to simulated data.")
+        
+        // Only simulate if we're not already using simulated data
+        if !isUsingSimulatedData {
+            simulateWeather()
+        }
     }
     
     // Simulate weather data for demo purposes
-    private func simulateWeatherData() {
+    private func simulateWeather() {
+        isUsingSimulatedData = true
+        
         // Simulate network delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             guard let self = self else { return }
@@ -126,6 +183,7 @@ class WeatherService: ObservableObject {
             }
             
             self.isLoading = false
+            print("🤖 Using simulated weather data: \(self.condition), \(self.temperature)°F")
         }
     }
     
