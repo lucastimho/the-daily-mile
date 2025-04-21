@@ -115,4 +115,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
-Created by Lucas Ho, Linh Ngo, Kyle Tarczon, and . Feel free to contribute by submitting issues or pull requests!
+Created by Lucas Ho, Linh Ngo, Kyle Tarczon, and Pierre Garcia. Feel free to contribute by submitting issues or pull requests!
