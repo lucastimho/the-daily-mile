@@ -2,7 +2,7 @@
 //  DailyMileApp.swift
 //  DailyMile
 //
-//  Created by Lucas Ho on 4/13/25.
+//  Created by Lucas Ho, Kyle Tarczon, and Pierre Garcia, and Linh Ngo.
 //
 
 import SwiftUI
