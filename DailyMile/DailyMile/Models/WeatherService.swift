@@ -13,7 +13,7 @@ class WeatherService: ObservableObject {
     
     // The API key - replace this with your actual key
     // Using a direct string here instead of accessing APIKeys to avoid compilation issues
-    private let apiKey = "2a461a2a326e21e9593c790f1a79e5b0"
+    private let apiKey = ""
     
     // Track if we're using simulated data
     private var isUsingSimulatedData = false
